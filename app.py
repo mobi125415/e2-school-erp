@@ -38,10 +38,11 @@ def data_root():
     if sys.platform.startswith("win"):
         base=Path(os.environ.get("LOCALAPPDATA",Path.home()))
     else:
-        base=Path.home()/".local"/"share"
-    p=base/"E2Solutions"/"SchoolERP"
-    p.mkdir(parents=True,exist_ok=True)
-    return p
+    base = Path("/tmp")
+
+p = base / "E2Solutions" / "SchoolERP"
+p.mkdir(parents=True, exist_ok=True)
+return p
 
 def recover_legacy_database(target):
     """Recover an older project-local database without overwriting current data."""
