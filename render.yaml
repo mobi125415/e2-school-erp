@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: e2-school-erp
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
+    healthCheckPath: /healthz
+    envVars:
+      - key: E2_ENV
+        value: production
+      - key: E2_NO_BROWSER
+        value: "1"
+      - key: E2_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: E2_CORS_ORIGINS
+        value: "*"
