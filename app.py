@@ -8,7 +8,7 @@ import json, threading, time
 from urllib import request as urllib_request
 from urllib.error import HTTPError, URLError
 from werkzeug.utils import secure_filename
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, send_from_directory, abort
+from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, flash, send_file, send_from_directory, abort
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -34,15 +34,24 @@ def resource_path(relative):
     return base/relative
 
 def data_root():
-    """Return a writable data directory for local and serverless deployments."""
-    if sys.platform.startswith("win"):
+    """Return a writable data directory for local and Vercel/serverless deployments."""
+    # Vercel's deployed filesystem is read-only. Only /tmp is writable.
+    # Do NOT honor a desktop/local E2_DATA_DIR value in a Vercel runtime.
+    is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("NOW_REGION"))
+    if is_serverless:
+        base = Path("/tmp")
+    elif sys.platform.startswith("win"):
         base = Path(os.environ.get("LOCALAPPDATA", Path.home()))
     else:
-        # Vercel/serverless filesystems are read-only except for /tmp.
-        base = Path(os.environ.get("E2_DATA_DIR", "/tmp"))
+        base = Path(os.environ.get("E2_DATA_DIR", Path.home() / ".local" / "share"))
 
     p = base / "E2Solutions" / "SchoolERP"
-    p.mkdir(parents=True, exist_ok=True)
+    try:
+        p.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        # Last-resort fallback for restricted environments.
+        p = Path("/tmp") / "E2Solutions" / "SchoolERP"
+        p.mkdir(parents=True, exist_ok=True)
     return p
 
 def recover_legacy_database(target):
@@ -85,9 +94,16 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 app.config["MAX_CONTENT_LENGTH"]=500 * 1024 * 1024  # 500 MB learning-resource upload limit
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or os.environ.get("E2_SECRET_KEY") or os.urandom(32).hex()
 
-# Cloud/managed Postgres support. Some providers still expose the legacy
-# postgres:// scheme; SQLAlchemy 2 expects postgresql://.
-DATABASE_URL = (os.environ.get("DATABASE_URL") or "").strip()
+# Cloud/managed Postgres support.
+# Different Vercel/Postgres integrations expose different variable names, so
+# accept the common ones. Some providers still expose postgres://.
+DATABASE_URL = (
+    os.environ.get("DATABASE_URL")
+    or os.environ.get("POSTGRES_URL_NON_POOLING")
+    or os.environ.get("POSTGRES_URL")
+    or os.environ.get("POSTGRES_PRISMA_URL")
+    or ""
+).strip()
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = "postgresql://" + DATABASE_URL[len("postgres://"):]
 if DATABASE_URL:
@@ -103,8 +119,23 @@ if DATABASE_URL:
         "pool_recycle": 300,
     }
 
-# Secure cookies automatically on HTTPS production deployments.
-if os.environ.get("E2_ENV", "development").lower() == "production":
+# Vercel can create multiple Python workers. A random SECRET_KEY on every
+# worker invalidates Flask sessions between requests. Use configured secret
+# when available, otherwise derive a deployment-stable fallback.
+_configured_secret = os.environ.get("SECRET_KEY") or os.environ.get("E2_SECRET_KEY")
+if _configured_secret:
+    app.config["SECRET_KEY"] = _configured_secret
+else:
+    _secret_seed = "|".join([
+        os.environ.get("VERCEL_PROJECT_ID", ""),
+        os.environ.get("VERCEL_GIT_COMMIT_SHA", ""),
+        os.environ.get("VERCEL_URL", ""),
+        "e2-school-erp",
+    ])
+    app.config["SECRET_KEY"] = hashlib.sha256(_secret_seed.encode("utf-8")).hexdigest() if _secret_seed.strip("|") else os.urandom(32).hex()
+
+# Secure cookies automatically on HTTPS production/serverless deployments.
+if os.environ.get("E2_ENV", "development").lower() == "production" or os.environ.get("VERCEL"):
     app.config.update(
         SESSION_COOKIE_SECURE=True,
         SESSION_COOKIE_HTTPONLY=True,
@@ -136,10 +167,23 @@ def cloud_api_headers(response):
 def healthz():
     try:
         db.session.execute(db.text("SELECT 1"))
-        return jsonify({"ok": True, "service": "E-2 School ERP", "database": db.engine.dialect.name})
-    except Exception:
+        return jsonify({
+            "ok": True,
+            "service": "E-2 School ERP",
+            "database": db.engine.dialect.name,
+            "persistent_database_configured": bool(DATABASE_URL),
+            "serverless": bool(os.environ.get("VERCEL")),
+        })
+    except Exception as exc:
         db.session.rollback()
-        return jsonify({"ok": False, "service": "E-2 School ERP", "database": "unavailable"}), 503
+        print("[E2] Health check database error:", repr(exc))
+        return jsonify({
+            "ok": False,
+            "service": "E-2 School ERP",
+            "database": "unavailable",
+            "persistent_database_configured": bool(DATABASE_URL),
+            "serverless": bool(os.environ.get("VERCEL")),
+        }), 503
 
 @app.route("/manifest.webmanifest")
 def pwa_manifest():
@@ -354,6 +398,8 @@ def migrate_db():
 
 def migrate_institute_branding():
     try:
+        if db.engine.dialect.name != "sqlite":
+            return
         cols=[r[1] for r in db.session.execute(db.text("PRAGMA table_info(institute)")).fetchall()]
         if "tagline" not in cols:
             db.session.execute(db.text("ALTER TABLE institute ADD COLUMN tagline VARCHAR(180) DEFAULT ''"))
@@ -407,20 +453,53 @@ def startup_intro():
 @app.route("/login",methods=["GET","POST"])
 def login():
     if request.method=="POST":
-        typ=request.form.get("login_type","admin")
-        if typ=="student":
-            inst=Institute.query.filter_by(email=request.form.get("institute_email","").strip().lower(),active=True).first()
-            stu=Student.query.filter_by(institute_id=inst.id,admission_no=request.form.get("admission_no","").strip(),status="Active").first() if inst else None
-            acc=StudentPortalAccount.query.filter_by(student_id=stu.id,active=True).first() if stu else None
-            if acc and check_password_hash(acc.password_hash,request.form.get("password","")):
-                session.clear(); session["student_id"]=stu.id; session["student_institute_id"]=inst.id; return redirect(url_for("student_portal"))
-            flash("Invalid student login details.","danger")
-        else:
-            u=User.query.filter_by(email=request.form.get("email","").strip().lower()).first()
-            if u and u.role!="teacher" and check_password_hash(u.password_hash,request.form.get("password","")):
-                session.clear(); session["uid"]=u.id; session["role"]=u.role; session["institute_id"]=u.institute_id; return redirect(url_for("master") if u.role=="superadmin" else url_for("dashboard"))
-            flash("Invalid administrator login details.","danger")
-    return render_template("login.html")
+        try:
+            typ=request.form.get("login_type","admin")
+            if typ=="student":
+                inst=Institute.query.filter_by(email=request.form.get("institute_email","").strip().lower(),active=True).first()
+                stu=Student.query.filter_by(institute_id=inst.id,admission_no=request.form.get("admission_no","").strip(),status="Active").first() if inst else None
+                acc=StudentPortalAccount.query.filter_by(student_id=stu.id,active=True).first() if stu else None
+                if acc and check_password_hash(acc.password_hash,request.form.get("password","")):
+                    session.clear(); session["student_id"]=stu.id; session["student_institute_id"]=inst.id
+                    return redirect(url_for("student_portal"))
+                flash("Invalid student login details.","danger")
+            else:
+                u=User.query.filter_by(email=request.form.get("email","").strip().lower()).first()
+                if u and u.role!="teacher" and check_password_hash(u.password_hash,request.form.get("password","")):
+                    session.clear(); session["uid"]=u.id; session["role"]=u.role; session["institute_id"]=u.institute_id
+                    return redirect(url_for("master") if u.role=="superadmin" else url_for("dashboard"))
+                flash("Invalid administrator login details.","danger")
+        except Exception as exc:
+            db.session.rollback()
+            print("[E2] Login database error:", repr(exc))
+            flash("Login service is temporarily unavailable. Please try again.","danger")
+    try:
+        return render_template("login.html")
+    except Exception as exc:
+        # Keep /login usable even if a deployment accidentally omitted the
+        # template bundle. This is only a fallback; the normal template is used
+        # whenever it is present.
+        print("[E2] Login template error:", repr(exc))
+        return render_template_string("""
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>E-2 School ERP - Login</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f7fb;margin:0;min-height:100vh;display:grid;place-items:center}
+.card{width:min(420px,92vw);background:#fff;padding:28px;border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.10)}
+h1{margin:0 0 6px}p{color:#667085}label{display:block;margin:14px 0 6px;font-weight:600}
+input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #d0d5dd;border-radius:10px}
+button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:10px;background:#2457d6;color:#fff;font-weight:700}
+.msg{padding:10px;border-radius:8px;background:#fff1f0;color:#b42318}
+</style></head><body><div class="card">
+<h1>E-2 School ERP</h1><p>Administrator Login</p>
+{% with messages=get_flashed_messages() %}{% for message in messages %}<div class="msg">{{ message }}</div>{% endfor %}{% endwith %}
+<form method="post">
+<input type="hidden" name="login_type" value="admin">
+<label>Email</label><input name="email" type="email" required autocomplete="username">
+<label>Password</label><input name="password" type="password" required autocomplete="current-password">
+<button type="submit">Login</button></form>
+</div></body></html>
+""")
 
 @app.route("/logout")
 def logout():
@@ -2123,6 +2202,11 @@ def professional_grand_sheet_pdf(eid):
 def migrate_erp22_content_bank():
     """Upgrade older SQLite lecture table without deleting existing ERP data."""
     try:
+        # PRAGMA table_info is SQLite-only. PostgreSQL schema is handled by
+        # SQLAlchemy create_all() and must never run this SQLite migration.
+        if db.engine.dialect.name != "sqlite":
+            print(f"[ERP22.2] {db.engine.dialect.name} database detected; skipping SQLite content migration.")
+            return
         rows=db.session.execute(db.text("PRAGMA table_info(lecture)")).fetchall()
         if not rows:
             return
