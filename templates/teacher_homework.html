@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block body %}
+<div class="page-head"><h1>Homework</h1><p>Create and maintain class homework.</p></div>
+<form method="post" class="panel form-grid"><label>Class<select name="class_name" required>{% for a in assignments %}<option>{{a.class_name}}</option>{% endfor %}</select></label><label>Subject<input name="subject"></label><label>Title<input name="title" required></label><label>Due Date<input type="date" name="due_date"></label><label class="wide">Details<textarea name="details" rows="4"></textarea></label><button class="btn" type="submit">Post Homework</button></form>
+<div class="panel"><table><tr><th>Class</th><th>Subject</th><th>Title</th><th>Details</th><th>Due</th></tr>{% for h in rows %}<tr><td>{{h.class_name}}</td><td>{{h.subject}}</td><td><b>{{h.title}}</b></td><td>{{h.details}}</td><td>{{h.due_date or '-'}}</td></tr>{% endfor %}</table></div>{% endblock %}

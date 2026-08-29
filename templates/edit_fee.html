@@ -1,0 +1,3 @@
+{% extends "base.html" %}{% block body %}<h1>Edit Fee Entry</h1><form method="post" class="form grid">
+<label>Student<input value="{{f.student.name}}" readonly></label><label>Month<input name="month" value="{{f.month}}" required></label><label>Total Amount<input name="amount" type="number" step=".01" value="{{f.amount}}" required></label>
+<label>Discount<input name="discount" type="number" step=".01" value="{{f.discount}}"></label><label>Paid<input name="paid" type="number" step=".01" value="{{f.paid}}"></label><label>Remarks<input name="note" value="{{f.note}}"></label><button>Update Fee</button></form>{% endblock %}

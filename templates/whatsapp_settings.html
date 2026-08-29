@@ -1,0 +1,36 @@
+{% extends "base.html" %}{% block body %}
+<style>
+.wgrid{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}.wcard{background:#fff;border:1px solid #e4e9f2;border-radius:16px;padding:22px;margin-bottom:16px}.identity{display:grid;grid-template-columns:1fr 1fr;gap:12px}.ibox{background:#f7f9fc;border-radius:12px;padding:15px}.state{display:inline-block;padding:6px 10px;border-radius:20px;background:{{'#e8f7ee' if connected else '#fff1e8'}};font-weight:700}.switch{display:flex;align-items:center;gap:10px;margin:18px 0}.advanced{margin-top:15px}.advanced summary{cursor:pointer;font-weight:700}.advanced input{width:100%;box-sizing:border-box;padding:10px;margin:5px 0 11px;border:1px solid #d9e0ea;border-radius:8px}.note{background:#eef4ff;border-radius:10px;padding:12px;color:#44536a}.logs{width:100%;border-collapse:collapse}.logs th,.logs td{padding:10px;border-bottom:1px solid #edf0f4;text-align:left}@media(max-width:900px){.wgrid,.identity{grid-template-columns:1fr}}
+</style>
+<h1>📱 Automatic Fee Reminder</h1>
+<p class="muted">Institute-wise WhatsApp reminders — scheduled automatically for the 5th of every month.</p>
+<div class="wgrid"><div>
+<div class="wcard"><h2>School WhatsApp Identity</h2>
+<div class="identity"><div class="ibox"><small class="muted">Institute</small><h3>{{inst.name}}</h3></div>
+<div class="ibox"><small class="muted">Branding Contact / WhatsApp</small><h3>{{brand_phone or 'Not added in institute branding'}}</h3></div></div>
+<p class="note">Messages use this institute's branding. To actually send <b>from this WhatsApp number</b>, the same number must be registered/connected in Meta WhatsApp Business Platform.</p>
+</div>
+<div class="wcard"><h2>Monthly Automation</h2>
+<p><b>Schedule:</b> Every month on the <b>5th</b></p>
+<p><b>Recipients:</b> Parents/guardians of students with outstanding fee</p>
+<form method="post"><label class="switch"><input type="checkbox" name="enabled" value="1" {{'checked' if cfg.enabled}}> <b>Enable automatic fee reminders</b></label>
+<button class="btn" type="submit">Save Reminder Setting</button>
+<details class="advanced"><summary>Advanced WhatsApp API Connection</summary>
+<p class="muted">One-time setup per institute. These values come from the institute's Meta WhatsApp Business account.</p>
+<label>Meta Phone Number ID</label><input name="phone_number_id" value="{{cfg.phone_number_id}}">
+<label>Access Token</label><input type="password" name="access_token" placeholder="{{'Saved — leave blank to keep' if cfg.access_token else 'Meta access token'}}">
+<label>Approved Template</label><input name="template_name" value="{{cfg.template_name}}">
+<label>Template Language</label><input name="template_language" value="{{cfg.template_language}}">
+<input type="hidden" name="api_version" value="{{cfg.api_version}}">
+<button class="btn" type="submit">Save Connection</button></details></form>
+</div></div>
+<div>
+<div class="wcard"><h2>Connection Status</h2><span class="state">{{'Connected / credentials saved' if connected else 'Setup required'}}</span>
+<p class="muted" style="margin-top:14px">Reminder date is fixed to 5th. ERP checks automatically while running.</p>
+{% if connected %}<form method="post" action="{{url_for('whatsapp_test_run')}}" onsubmit="return confirm('This will send real reminders to all currently pending-fee parents. Continue?')"><button class="btn">Run Real Test</button></form>{% endif %}
+</div>
+<div class="wcard"><h2>Recent Delivery Log</h2><div style="overflow:auto"><table class="logs"><tr><th>Date</th><th>Phone</th><th>Status</th><th>Details</th></tr>
+{% for x in logs %}<tr><td>{{x.sent_at}}</td><td>{{x.phone}}</td><td><b>{{x.status}}</b></td><td>{{x.message_id or x.error}}</td></tr>{% else %}<tr><td colspan="4">No reminder attempts yet.</td></tr>{% endfor %}</table></div></div>
+</div></div>
+<p class="muted"><small>Powered by E-2 Solutions</small></p>
+{% endblock %}

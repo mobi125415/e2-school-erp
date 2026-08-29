@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% block content %}
+<h1>Class {{class_name}}</h1><p class="muted">{{institute.name if institute else ""}} • {{rows|length}} students</p>
+<div style="background:#fff;border-radius:15px;padding:18px;overflow:auto"><table style="width:100%"><tr><th>Admission</th><th>Student</th><th>Section</th><th>Status</th></tr>
+{% for x in rows %}<tr><td>{{x.admission_no}}</td><td><b>{{x.name}}</b></td><td>{{x.section}}</td><td>{{x.status}}</td></tr>{% else %}<tr><td colspan="4">No students.</td></tr>{% endfor %}</table></div>
+{% endblock %}

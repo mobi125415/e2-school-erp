@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block body %}<h1>{{exam.name}} — {{exam.class_name}}</h1>
+<div class="hero"><h2>Select Student</h2><p>All active students of this class are shown below. Click a student to enter all subject marks together.</p></div>
+<div class="exportbar"><a class="btn" target="_blank" href="/exam-session/{{exam.id}}/grand-sheet.pdf">Download Class Grand Sheet PDF</a></div>
+<div class="table"><table><tr><th>Adm #</th><th>Student</th><th>Section</th><th>Subjects</th><th>Enter / Edit Marks</th><th>Result PDF</th></tr>{% for s in students %}<tr><td>{{s.admission_no}}</td><td>{{s.name}}</td><td>{{s.section}}</td><td>{{subjects|length}}</td><td><a class="btn" href="/exam-session/{{exam.id}}/student/{{s.id}}">Open Marks</a></td><td><a class="btn" target="_blank" href="/exam-session/{{exam.id}}/student/{{s.id}}.pdf">Result PDF</a></td></tr>{% endfor %}</table></div>{% endblock %}

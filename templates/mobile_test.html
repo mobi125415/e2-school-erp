@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% block body %}
+<style>
+.mhero{background:linear-gradient(135deg,#102b62,#285bd7);color:#fff;border-radius:18px;padding:25px}.mcard{background:#fff;border:1px solid #e3e9f2;border-radius:16px;padding:20px;margin-top:16px}.urlbox{font-size:22px;font-weight:800;background:#eef4ff;padding:15px;border-radius:10px;word-break:break-all}.steps{line-height:1.8}.pill{display:inline-block;background:#e8f7ee;color:#237244;padding:6px 10px;border-radius:20px;font-weight:700}
+</style>
+<div class="mhero"><h1>📱 Mobile / LAN Test</h1><p>Test the same ERP from a phone on your local Wi‑Fi network.</p></div>
+<div class="mcard"><span class="pill">Mobile-ready mode enabled</span><h2>Open this on your phone</h2>
+<div class="urlbox">http://{{lan_ip}}:{{port}}</div>
+<div class="steps"><p><b>1.</b> PC aur mobile ko same Wi‑Fi/router par connect karein.</p><p><b>2.</b> ERP PC par running rehna chahiye.</p><p><b>3.</b> Mobile Chrome/Safari mein upar wala address type karein.</p><p><b>4.</b> Windows Firewall prompt aaye to Python ko Private networks par Allow karein.</p></div></div>
+<div class="mcard"><h2>Online Version Foundation</h2><p>ERP ab local LAN par sirf localhost ke bajaye network interface par listen karta hai. Ye mobile browser testing ka foundation hai. Public internet/cloud deployment ke liye HTTPS, production WSGI server, domain, managed database aur server-side backups next deployment layer honge.</p></div>
+<p class="muted"><small>Powered by E-2 Solutions</small></p>
+{% endblock %}

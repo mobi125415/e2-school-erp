@@ -1,0 +1,32 @@
+{% extends "base.html" %}{% block body %}
+<style>
+.fr-head{display:flex;justify-content:space-between;gap:15px;align-items:end}.fr-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}.fr-card,.fr-panel{background:#fff;border:1px solid #e4e9f1;border-radius:15px;padding:18px}.fr-card b{display:block;font-size:26px;margin-top:7px}.fr-filter{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end}.fr-filter label{font-size:12px;color:#6e7a8e}.fr-filter select,.fr-filter input{width:100%;padding:10px;border:1px solid #d9e0ea;border-radius:8px}.fr-btn{display:inline-block;border:0;background:#285bd7;color:#fff;padding:10px 13px;border-radius:8px;text-decoration:none;cursor:pointer}.wa{background:#168c50}.fr-table{width:100%;border-collapse:collapse;min-width:900px}.fr-table th,.fr-table td{padding:11px;border-bottom:1px solid #edf0f4;text-align:left;vertical-align:top}.fr-table th{background:#f7f9fc}.msg{max-width:360px;font-size:12px;color:#68758a;line-height:1.45}.warn{color:#b23b3b;font-weight:700}@media(max-width:850px){.fr-cards{grid-template-columns:1fr}.fr-filter{grid-template-columns:1fr 1fr}.fr-head{display:block}}
+</style>
+<div class="fr-head"><div><h1>📱 WhatsApp Fee Reminders</h1><a class="fr-btn" href="{{url_for('whatsapp_settings')}}">⚙ Automatic WhatsApp Settings</a><p class="muted">Pending fee students only. Message is prepared automatically using the logged-in school's name.</p></div></div>
+
+<div class="fr-cards">
+<div class="fr-card"><small class="muted">Pending Fee Records</small><b>{{rows|length}}</b></div>
+<div class="fr-card"><small class="muted">Total Outstanding</small><b>Rs. {{'{:,.0f}'.format(total_due)}}</b></div>
+<div class="fr-card"><small class="muted">School</small><b style="font-size:18px">{{inst.name}}</b></div>
+</div>
+
+<div class="fr-panel"><form class="fr-filter" method="get">
+<div><label>Class</label><select name="class_name"><option value="">All Classes</option>{% for c in classes %}<option value="{{c}}" {{'selected' if c==selected_class}}>{{c}}</option>{% endfor %}</select></div>
+<div><label>Fee Month</label><select name="month"><option value="">All Months</option>{% for m in months %}<option value="{{m}}" {{'selected' if m==selected_month}}>{{m}}</option>{% endfor %}</select></div>
+<div><label>Student Search</label><input name="q" value="{{q}}" placeholder="Student name"></div>
+<div><button class="fr-btn" type="submit">Apply Filter</button></div>
+</form></div>
+
+<div class="fr-panel" style="overflow:auto"><table class="fr-table">
+<tr><th>Student</th><th>Class</th><th>Month</th><th>Fee</th><th>Paid</th><th>Outstanding</th><th>WhatsApp</th><th>Reminder Message</th></tr>
+{% for r in rows %}<tr>
+<td><b>{{r.student.name}}</b><br><small>{{r.student.admission_no}}</small></td>
+<td>{{r.student.class_name}} {{r.student.section}}</td><td>{{r.fee.month}}</td>
+<td>Rs. {{'{:,.0f}'.format(r.fee.amount-r.fee.discount)}}</td><td>Rs. {{'{:,.0f}'.format(r.fee.paid)}}</td>
+<td><b>Rs. {{'{:,.0f}'.format(r.due)}}</b></td>
+<td>{% if r.wa_url %}<a class="fr-btn wa" href="{{r.wa_url}}" target="_blank">Open WhatsApp</a><br><small>+{{r.phone}}</small>{% else %}<span class="warn">Phone missing</span>{% endif %}</td>
+<td><div class="msg">{{r.message}}</div></td>
+</tr>{% else %}<tr><td colspan="8">No pending fee records found for this filter.</td></tr>{% endfor %}
+</table></div>
+<p class="muted"><small>WhatsApp opens the prepared reminder in WhatsApp/WhatsApp Web. The administrator reviews and presses Send. This version does not send messages automatically without a WhatsApp API provider.</small></p>
+{% endblock %}
