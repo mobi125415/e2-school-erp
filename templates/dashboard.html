@@ -1,0 +1,58 @@
+{% extends "base.html" %}{% block body %}
+<div class="e2-dash-head">
+  <div><div class="e2-kicker2">SCHOOL MANAGEMENT</div><h1>{{inst.name}}</h1><p>Professional overview of your school's daily operations.</p></div>
+  <div class="e2-live"><span></span> Live System</div>
+</div>
+
+<div class="e2-quickbar">
+  <a href="/students">＋ Add Student</a><a href="/fees">＋ Add Fee</a><a href="/attendance-admin">📋 Attendance</a><a href="/exams">▧ New Exam</a><a href="/certificate">▤ Certificate</a><a href="/backups">↥ Backup</a>
+</div>
+
+<form class="search dashboardfilter e2-filter">
+<select name="class_name"><option value="">All Classes</option>{% for c in classes %}<option value="{{c}}" {% if c==selected_class %}selected{% endif %}>{{c}}</option>{% endfor %}</select>
+<select name="month"><option value="">Latest / General View</option>{% for m in months %}<option value="{{m}}" {% if m==selected_month %}selected{% endif %}>{{m}}</option>{% endfor %}</select>
+<button>Apply Filters</button>
+</form>
+
+<div class="cards dashboard-cards e2-stat-grid">
+<div class="card important-card"><small>ACTIVE STUDENTS</small><strong>{{total_active}}</strong><span>Currently enrolled</span></div>
+<div class="card"><small>TEACHERS</small><strong>{{teacher_count}}</strong><span>Active staff</span></div>
+<div class="card"><small>FEES COLLECTED</small><strong>Rs {{'{:,.0f}'.format(collected)}}</strong><span>Total recorded</span></div>
+<div class="card"><small>PENDING FEES</small><strong>Rs {{'{:,.0f}'.format(due)}}</strong><span>Outstanding amount</span></div>
+<div class="card"><small>EXPENSES</small><strong>Rs {{'{:,.0f}'.format(expense)}}</strong><span>Total recorded</span></div>
+<div class="card"><small>NET BALANCE</small><strong>Rs {{'{:,.0f}'.format(profit)}}</strong><span>Income minus expenses</span></div>
+<div class="card"><small>TODAY ATTENDANCE</small><strong>{{attendance_today_pct}}%</strong><span>{{present_today}} present today</span></div>
+<div class="card"><small>EXAM SESSIONS</small><strong>{{exam_count}}</strong><span>Academic records</span></div>
+</div>
+
+<div class="e2-dash-grid">
+<section class="e2-panel"><div class="e2-panel-head"><div><h2>Fee & Accounts Snapshot</h2><p>Current financial position from saved ERP records.</p></div><a href="/accounts">View Accounts →</a></div>
+<div class="e2-money-grid"><div><small>Collected</small><b>Rs {{'{:,.0f}'.format(collected)}}</b></div><div><small>Pending</small><b>Rs {{'{:,.0f}'.format(due)}}</b></div><div><small>Expenses</small><b>Rs {{'{:,.0f}'.format(expense)}}</b></div></div>
+<div class="e2-progress"><div><span>Fee collection position</span><b>{{paid_count}} paid / {{unpaid_count}} unpaid</b></div><div class="e2-track"><i style="width:{{ ((paid_count/(paid_count+unpaid_count))*100 if (paid_count+unpaid_count) else 0)|round }}%"></i></div></div>
+</section>
+<section class="e2-panel"><div class="e2-panel-head"><div><h2>Today's Attendance</h2><p>Only marked records are included.</p></div><a href="/attendance-admin">Open →</a></div><div class="e2-att-big">{{attendance_today_pct}}<span>%</span></div><div class="e2-att-note">{{present_today}} present out of {{today_attendance_count|default(0)}} marked today</div></section>
+</div>
+
+<section class="e2-panel"><div class="e2-panel-head"><div><h2>Classes</h2><p>Select a class to open its student records.</p></div><a href="/classes">Manage Classes →</a></div><div class="classgrid">{% for c in classes %}<a href="{{url_for('class_view_safe',class_name=c)}}" class="classbox"><b>{{c}}</b><small>Open class →</small></a>{% else %}<p>No classes added yet.</p>{% endfor %}</div></section>
+
+
+
+<section class="e2-dash-grid">
+<section class="e2-panel"><div class="e2-panel-head"><div><h2>Class Distribution</h2><p>Active student distribution by class.</p></div><span class="e2-live">Live</span></div>
+{% for name,count in top_classes %}<div class="e2-bar-row"><div><span>{{name}}</span><b>{{count}}</b></div><div class="e2-track"><i style="width:{{ ((count/(total_active or 1))*100)|round }}%"></i></div></div>{% else %}<p>No student records yet.</p>{% endfor %}
+</section>
+<section class="e2-panel"><div class="e2-panel-head"><div><h2>Recent Students</h2><p>Latest enrolled records.</p></div><a href="/students">View all →</a></div>
+{% for st in recent_students %}<div class="e2-recent-row"><div><b>{{st.name}}</b><small>{{st.admission_no}} · {{st.class_name}} {{st.section}}</small></div><span>{{st.status}}</span></div>{% else %}<p>No students added yet.</p>{% endfor %}
+</section>
+</section>
+
+<section class="e2-panel"><div class="e2-panel-head"><div><h2>Financial Health</h2><p>Collection performance from saved fee records.</p></div><strong>{{fee_rate}}% collected</strong></div>
+<div class="e2-track e2-track-lg"><i style="width:{{fee_rate}}%"></i></div>
+<div class="e2-money-grid"><div><small>Collected</small><b>Rs {{'{:,.0f}'.format(collected)}}</b></div><div><small>Outstanding</small><b>Rs {{'{:,.0f}'.format(due)}}</b></div><div><small>Net Balance</small><b>Rs {{'{:,.0f}'.format(profit)}}</b></div></div>
+</section>
+
+<div class="e2-bottom-grid">
+<section class="e2-panel"><h2>System Shortcuts</h2><div class="e2-shortcuts"><a href="/students">👨‍🎓 Students</a><a href="/teachers">👩‍🏫 Teachers</a><a href="/results">☑ Results</a><a href="/id-cards">▣ ID Cards</a><a href="/admit-card">▤ Admit Cards</a><a href="/analytics">▥ Analytics</a></div></section>
+<section class="e2-panel"><h2>System Status</h2><div class="e2-status"><span><i></i> Database</span><b>Connected</b><span><i></i> ERP Services</span><b>Running</b><span><i></i> Backup System</span><b>Ready</b></div></section>
+</div>
+{% endblock %}

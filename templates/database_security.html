@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% block body %}
+<style>
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}.sc,.sp{background:#fff;border:1px solid #e3e9f2;border-radius:15px;padding:20px}.ok{display:inline-block;background:#e8f7ee;color:#237244;padding:6px 10px;border-radius:20px;font-weight:700}.warn{display:inline-block;background:#fff2e7;color:#9a531b;padding:6px 10px;border-radius:20px;font-weight:700}.sc b{display:block;font-size:21px;margin:8px 0}.info{background:#eef4ff;padding:14px;border-radius:10px;color:#46566f;line-height:1.6}.btnsec{border:0;background:#285bd7;color:white;padding:10px 14px;border-radius:8px;cursor:pointer}@media(max-width:800px){.sg{grid-template-columns:1fr}}
+</style>
+<h1>🔒 Database Security</h1>
+<p class="muted">Protection status for locally stored ERP data and sensitive integration credentials.</p>
+<div class="sg">
+<div class="sc"><small>Installation Security Key</small><b>{{'Created' if key_exists else 'Not Created'}}</b><span class="{{'ok' if key_exists else 'warn'}}">{{'Protected' if key_exists else 'Setup Required'}}</span></div>
+<div class="sc"><small>WhatsApp/API Secret</small><b>{{'Encrypted' if encrypted_token else 'No encrypted token yet'}}</b><span class="{{'ok' if encrypted_token else 'warn'}}">{{'Protected' if encrypted_token else 'Pending / Not Connected'}}</span></div>
+<div class="sc"><small>Local Database</small><b>{{db_name}}</b><span class="muted">{{'%.2f'|format(db_size/1024/1024)}} MB</span></div>
+</div>
+<div class="sp"><h2>Sensitive Data Protection</h2>
+<p class="info">ERP now encrypts saved integration secrets before storing them in SQLite and verifies integrity before decrypting them. Passwords continue to use secure password hashing. The installation security key remains local to this ERP installation.</p>
+<form method="post" action="{{url_for('database_security_protect_existing')}}" onsubmit="return confirm('Protect existing saved integration secrets now?')"><button class="btnsec">Protect Existing Secrets</button></form>
+</div>
+<div class="sp" style="margin-top:16px"><h2>Important Backup Rule</h2>
+<p>Keep the <b>instance/e2_master.key</b> file together with a secure disaster-recovery copy. If encrypted API credentials are restored to another PC without this key, those credentials cannot be decrypted and must be entered again.</p>
+<p class="muted"><small>This version protects application secrets at rest. Full-file SQLite encryption can be added later with SQLCipher when packaging the commercial deployment.</small></p>
+</div>
+<p class="muted"><small>Powered by E-2 Solutions</small></p>
+{% endblock %}

@@ -1,0 +1,1 @@
+{% extends "base.html" %}{% block body %}<div class="page-head"><h1>Classes</h1><p>Class-wise student management</p></div><div class="classgrid">{% for n,c in rows %}<a href="/students?class_name={{n}}" class="classbox"><strong>{{n}}</strong><small>{{c}} Active Students</small></a>{% endfor %}</div>{% endblock %}

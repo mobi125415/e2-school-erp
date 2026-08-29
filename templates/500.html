@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width:760px;margin:50px auto;padding:32px">
+  <h1>Something went wrong</h1>
+  <p>The E-2 ERP could not complete this request. Your saved data has not been deleted.</p>
+  <p>Please return to the dashboard and try again. If the issue continues, the server console contains the technical error for diagnosis.</p>
+  <a class="btn" href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+</div>
+{% endblock %}
