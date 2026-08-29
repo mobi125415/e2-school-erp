@@ -1,3 +1,0 @@
-{% extends "base.html" %}{% block body %}<h1>Enter Student Marks</h1>
-<div class="hero"><h2>{{student.name}} — {{exam.name}}</h2><p>Class {{student.class_name}} {{student.section}} | Admission # {{student.admission_no}}. Subjects are already loaded; enter only obtained marks.</p></div>
-<form method="post"><div class="table"><table><tr><th>Subject</th><th>Total Marks</th><th>Obtained Marks</th></tr>{% for s in subjects %}<tr><td><b>{{s.subject}}</b></td><td>{{s.total_marks}}</td><td><input name="marks_{{s.id}}" type="number" min="0" max="{{s.total_marks}}" step=".01" value="{{existing[s.id].obtained_marks if s.id in existing else ''}}" placeholder="Enter marks"></td></tr>{% endfor %}</table></div><button>Save All Marks</button></form>{% endblock %}

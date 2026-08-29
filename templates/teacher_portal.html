@@ -1,6 +1,0 @@
-{% extends "base.html" %}{% block body %}
-<div class="page-head"><h1>Teacher Portal</h1><p>My classes, attendance and homework.</p></div>
-<div class="cards"><div class="card"><h3>Assigned Classes</h3><b>{{assignments|length}}</b></div><div class="card"><h3>My Students</h3><b>{{student_count}}</b></div><div class="card"><h3>Attendance Marked Today</h3><b>{{marked}}</b></div></div>
-<div class="panel"><h2>My Classes</h2><div class="quick-grid">{% for a in assignments %}<a class="quick-card" href="{{url_for('teacher_class',class_name=a.class_name)}}"><b>{{a.class_name}}</b><span>{{a.subject or 'Class Teacher'}}</span></a>{% else %}<p>No class assigned yet. School Admin can assign classes from Teacher Assignments.</p>{% endfor %}</div></div>
-<div class="panel"><h2>Recent Homework</h2><a class="btn" href="{{url_for('teacher_homework')}}">Post Homework</a><table><tr><th>Class</th><th>Subject</th><th>Homework</th><th>Due</th></tr>{% for h in homework %}<tr><td>{{h.class_name}}</td><td>{{h.subject}}</td><td>{{h.title}}</td><td>{{h.due_date or '-'}}</td></tr>{% endfor %}</table></div>
-{% endblock %}

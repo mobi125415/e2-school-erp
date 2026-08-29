@@ -1,6 +1,0 @@
-{% extends "base.html" %}{% block body %}<h1>E-2 Solutions - Master Admin</h1><div class="hero"><h2>Institute Control Center</h2><p>Create schools, issue login email/password, disable accounts and reset passwords.</p></div>
-<details open><summary>+ Add New School / Institute</summary><form method="post" class="form grid"><input name="name" placeholder="Institute Name" required><input name="email" type="email" placeholder="Login Email" required><input name="password" type="text" placeholder="Initial Password" required><input name="primary_color" type="color" value="#2457d6"><button>Create Institute</button></form></details>
-<div class="cards">{% for i in institutes %}<div class="card schoolcard"><small>Institute #{{i.id}}</small><strong>{{i.name}}</strong><p>{{i.email}}</p><span class="pill">{{'Active' if i.active else 'Disabled'}}</span>
-<form method="post" action="/master/institute/{{i.id}}/password" class="mini"><input name="password" placeholder="New password" required><button>Set Password</button></form>
-<form method="post" action="/master/institute/{{i.id}}/toggle"><button>{{'Disable' if i.active else 'Enable'}}</button></form></div>{% endfor %}</div>{% endblock %}
-<footer class="e2-footer">Powered by E-2 Solutions &nbsp;|&nbsp; Contact: +923010012627</footer>

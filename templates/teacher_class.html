@@ -1,7 +1,0 @@
-{% extends "base.html" %}{% block body %}
-<div class="page-head"><h1>{{class_name}} — Attendance</h1><p>Mark daily class attendance.</p></div>
-<form method="post" action="{{url_for('teacher_attendance',class_name=class_name)}}" class="panel">
-<label>Date <input type="date" name="attendance_date" value="{{today.isoformat()}}" required></label>
-<table><tr><th>Admission No.</th><th>Student</th><th>Father</th><th>Status</th></tr>
-{% for s in students %}<tr><td>{{s.admission_no}}</td><td><b>{{s.name}}</b></td><td>{{s.father_name}}</td><td><select name="status_{{s.id}}"><option>Present</option><option>Absent</option><option>Leave</option><option>Late</option></select></td></tr>{% endfor %}</table>
-<button class="btn" type="submit">Save Attendance</button></form>{% endblock %}

@@ -1,6 +1,0 @@
-{% extends "base.html" %}{% block body %}<h1>Student ID Card</h1>
-<div class="exportbar"><a class="btn" href="/student/{{s.id}}/id-card.pdf">Download ID Card PDF</a></div>
-<div class="id-preview"><div class="id-head">{% if inst.logo %}<img src="{{url_for('user_logo',filename=inst.logo)}}">{% endif %}<div><b>{{inst.name}}</b><small>{{inst.tagline or "STUDENT ID CARD"}}</small></div></div>
-<div class="id-body">{% if s.photo %}<img class="id-photo" src="{{url_for('user_logo',filename=s.photo)}}">{% else %}<div class="id-photo empty">PHOTO</div>{% endif %}
-<div><p><b>Name:</b> {{s.name}}</p><p><b>Guardian:</b> {{s.father_name}}</p><p><b>Class:</b> {{s.class_name}} {{s.section}}</p><p><b>Admission #:</b> {{s.admission_no}}</p><p><b>Contact:</b> {{s.phone}}</p></div></div>
-<div class="id-foot">{{inst.address}}<br><b>Powered by E-2 Solutions | +923010012627</b></div></div>{% endblock %}

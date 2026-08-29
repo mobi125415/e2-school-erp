@@ -1,6 +1,0 @@
-{% extends "base.html" %}{% block body %}<h1>Edit Student</h1><form method="post" enctype="multipart/form-data" class="form grid">
-<label>Admission No<input name="admission_no" value="{{s.admission_no}}" required></label><label>Name<input name="name" value="{{s.name}}" required></label>
-<label>Guardian<input name="father_name" value="{{s.father_name}}"></label><label>Phone<input name="phone" value="{{s.phone}}"></label>
-<label>Class<input name="class_name" value="{{s.class_name}}" required></label><label>Section<input name="section" value="{{s.section}}"></label>
-<label>Decided Monthly Fee<input name="monthly_fee" type="number" step=".01" value="{{s.monthly_fee}}" required></label><label>Books & Copies<input name="books_copies_amount" type="number" step=".01" value="{{s.books_copies_amount}}"></label>
-<label>Student Photo<input name="photo" type="file" accept="image/png,image/jpeg,image/webp"></label><label>Status<select name="status"><option selected>{{s.status}}</option><option>Active</option><option>Old</option><option>Left</option></select></label><button>Update Student</button></form>{% endblock %}
